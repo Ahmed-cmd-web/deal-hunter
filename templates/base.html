@@ -211,7 +211,7 @@
     </style>
     <script>
 
-      const baseUrl = 'http://{{ request.get_host }}/'
+      const baseUrl = 'https://{{ request.get_host }}/'
       const getCountries = async () => {
         let res = await $.ajax({
           url: `${baseUrl}request_result/request/get_countries/`,
