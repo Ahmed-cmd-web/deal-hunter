@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deal Hunter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  </head>
+  <body class="bg-gray-100 min-h-screen flex flex-col">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <header class="bg-blue-600 text-white py-4">
+      <div class="container mx-auto px-4">
+        <h1 class="text-3xl font-bold">Deal Hunter</h1>
+        <p class="text-sm">Find the best deals online</p>
+      </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+      <div class="bg-white shadow-lg rounded-lg p-6 mb-8">
+        <form id="searchForm" class="mb-6 w-full">
+          <div class="mb-4">
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2"
+              for="keyword"
+            >
+              Search Keyword
+            </label>
+            <input
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="keyword"
+              type="text"
+              placeholder="Enter search keyword"
+              required
+            />
+          </div>
+          <div class="flex justify-between items-center p-2">
+            <div class="flex-1">
+              <label
+                class="block text-gray-700 text-sm font-bold mb-2 w-full"
+                for="sourceCountry"
+              >
+                Source Country
+              </label>
+              <select
+                name="sourceCountry"
+                class="bg-gray-200 mr-2 w-full"
+                id="sourceCountryOptions"
+                required
+              ></select>
+            </div>
+            <div class="flex-1 ml-2">
+              <label
+                class="block text-gray-700 text-sm font-bold mb-2 w-full"
+                for="targetCountry"
+              >
+                Target Country
+              </label>
+              <select
+                name="targetCountry"
+                class="w-full mr-2 bg-gray-200"
+                id="targetCountryOptions"
+                required
+              ></select>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center">
+            <button
+              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300"
+              type="submit"
+            >
+              Start Search
+            </button>
+            <button
+              id="resetButton"
+              class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300"
+              type="button"
+            >
+              Reset
+            </button>
+          </div>
+        </form>
+
+        <div id="searchResults" class="hidden">
+          <div class="mb-6">
+            <p class="text-lg">
+              Number of findings:
+              <span id="findingsCount" class="font-bold text-blue-600"></span>
+            </p>
+          </div>
+          <div class="m-2">
+            <label
+              class="block text-gray-700 text-sm font-bold mb-2 w-full"
+              for="price"
+            >
+              Price
+            </label>
+            <input
+              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="price"
+              type="number"
+              step="any"
+              placeholder="Enter price"
+              required
+            />
+          </div>
+          <div
+            class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6"
+          >
+            <button
+              id="extractAll"
+              class="w-full sm:w-auto bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300"
+            >
+              Extract All
+            </button>
+            <div class="flex w-full sm:w-auto items-center space-x-2">
+              <input
+                id="extractCount"
+                type="number"
+                placeholder="Count"
+                class="flex-grow shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+              <button
+                id="extractSpecific"
+                class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300"
+              >
+                Extract Specific
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="loadingIndicator" class="hidden">
+          <div class="flex justify-center items-center py-12">
+            <div
+              class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"
+            ></div>
+          </div>
+        </div>
+
+        <div id="resultsContainer" class="hidden">
+          <h2 class="text-2xl font-bold mb-4 text-blue-600">Search Results</h2>
+          <div class="overflow-x-auto bg-white rounded-lg shadow">
+            <table id="resultsTable" class="min-w-full p-5">
+              <thead class="bg-gray-50 table-header-group">
+                <tr>
+                  <th
+                    class="py-3 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Title
+                  </th>
+                  <th
+                    class="py-3 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Brand
+                  </th>
+                  <th
+                    class="py-3 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Original Price
+                  </th>
+                  <th
+                    class="py-3 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Discounted Price
+                  </th>
+                  <!-- <th
+                    class="py-3 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Image
+                  </th> -->
+                  <th
+                    class="py-3 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Original Currency(Target)
+                  </th>
+                  <th
+                    class="py-3 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Profit/Loss
+                  </th>
+                  <th
+                    class="py-3 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Percentage
+                  </th>
+                  <th
+                    class="py-3 px-4 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    URL
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody" class="divide-y divide-gray-200"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-4">
+      <div class="container mx-auto px-4 text-center">
+        <p>&copy; 2024 Deal Hunter. All rights reserved.</p>
+      </div>
+    </footer>
+    <style>
+      td {
+        text-align: center;
+      }
+    </style>
+    <script>
+
+      const baseUrl = 'http://{{ request.get_host }}/'
+      const getCountries = async () => {
+        let res = await $.ajax({
+          url: `${baseUrl}request_result/request/get_countries/`,
+          type: `GET`,
+        })
+        return res
+      }
+      const populateCountries = (countries) => {
+        const sourceCountryOptions = document.getElementById(
+          'sourceCountryOptions'
+        )
+        const targetCountryOptions = document.getElementById(
+          'targetCountryOptions'
+        )
+        countries.source.forEach(({ name, code, flag }) => {
+          const sourceOption = document.createElement('option')
+          sourceOption.value = code
+          sourceOption.textContent = `${flag} ${name}`
+          sourceCountryOptions.appendChild(sourceOption)
+        })
+        countries.target.forEach(({ name, code, flag }) => {
+          const targetOption = document.createElement('option')
+          targetOption.value = code
+          targetOption.textContent = `${flag} ${name}`
+          targetCountryOptions.appendChild(targetOption)
+        })
+      }
+      $(document).ready(() => {
+        getCountries().then((countries) => {
+          populateCountries(countries)
+        })
+      })
+
+      document
+        .getElementById('searchForm')
+        .addEventListener('submit', async function (e) {
+          e.preventDefault()
+          const searchWord = document.getElementById('keyword').value
+          showLoading(true)
+          const sourceCountry = document.getElementById(
+            'sourceCountryOptions'
+          ).value
+
+          const targetCountry = document.getElementById(
+            'targetCountryOptions'
+          ).value
+          try {
+            let res = await $.ajax({
+              url: `${baseUrl}request_result/request/get_count/`,
+              type: 'POST',
+              data: {
+                searchWord,
+                sourceCountry,
+                targetCountry,
+              },
+            })
+            document.getElementById('findingsCount').textContent =
+              res.count ?? -1
+            document.getElementById('searchResults').classList.remove('hidden')
+          } catch (error) {
+            console.error('Error:', error)
+            alert('An error occurred while searching. Please try again.')
+          } finally {
+            showLoading(false)
+          }
+        })
+
+      document
+        .getElementById('extractAll')
+        .addEventListener('click', function () {
+          const price = document.getElementById('price').value
+          if (!price || parseInt(price) < 0)
+            return alert('Please enter a valid price to extract.')
+          const count = document.getElementById('findingsCount').textContent
+          extractResults(count)
+        })
+
+      document
+        .getElementById('extractSpecific')
+        .addEventListener('click', function () {
+          const price = document.getElementById('price').value
+          if (!price || parseInt(price) < 0)
+            return alert('Please enter a valid price to extract.')
+
+          const count = document.getElementById('extractCount').value
+          const maxCount = document.getElementById('findingsCount').textContent
+          if (count && parseInt(count) > 0 && parseInt(count) <= maxCount)
+            extractResults(count)
+          else alert('Please enter a valid number of results to extract.')
+        })
+
+      document
+        .getElementById('resetButton')
+        .addEventListener('click', function () {
+          document.getElementById('keyword').value = ''
+          document.getElementById('searchResults').classList.add('hidden')
+          document.getElementById('resultsContainer').classList.add('hidden')
+          document.getElementById('extractCount').value = ''
+        })
+
+      async function extractResults(count) {
+        const searchWord = document.getElementById('keyword').value
+        const price = document.getElementById('price').value
+        const sourceCountry = document.getElementById(
+          'sourceCountryOptions'
+        ).value
+        const targetCountry = document.getElementById(
+          'targetCountryOptions'
+        ).value
+        showLoading(true)
+
+        try {
+          let { results } = await $.ajax({
+            url: `${baseUrl}request_result/request/extract_trendyol_results/`,
+            type: 'POST',
+            data: {
+              searchWord,
+              sourceCountry,
+              targetCountry,
+              count,
+              price,
+            },
+          })
+          displayResults(results)
+        } catch (error) {
+          console.error('Error:', error)
+          alert('An error occurred while extracting results. Please try again.')
+        } finally {
+          showLoading(false)
+        }
+      }
+
+      function displayResults(results) {
+        const tbody = document.getElementById('resultsBody')
+        tbody.innerHTML = ''
+
+        results.forEach((result) => {
+          const row = tbody.insertRow()
+          row.insertCell(0).textContent = result.productName
+          row.insertCell(1).textContent = result.brand
+          row.insertCell(2).textContent = result.originalPrice ?? 'N/A'
+          row.insertCell(3).textContent = result.discountedPrice ?? 'N/A'
+          // let imgCell = row.insertCell(4)
+          // let img = document.createElement('img')
+          // img.src = result.imageURL
+          // img.alt = result.productName
+          // img.className = 'w-10 h-10'
+          // imgCell.appendChild(img)
+          row.insertCell(4).textContent = result.currency ?? 'N/A'
+          row.insertCell(5).textContent = result['profit/loss']
+          if (result['profit/loss'] < 0) row.cells[5].style.color = '#bb2124'
+          else row.cells[5].style.color = '#22bb33'
+          row.insertCell(6).textContent = `${result['percentage']}%`
+          if (result['percentage'] < 0) row.cells[6].style.color = '#bb2124'
+          else {
+            row.cells[6].style.color = '#22bb33'
+            row.cells[6].textContent = `+${result['percentage']}%`
+          }
+
+          const urlCell = row.insertCell(7)
+          const link = document.createElement('a')
+          link.href = result.link
+          link.textContent = 'View Deal'
+          link.target = '_blank'
+          link.className = 'text-blue-600 hover:underline'
+          urlCell.appendChild(link)
+        })
+
+        document.getElementById('resultsContainer').classList.remove('hidden')
+      }
+
+      function showLoading(show) {
+        const loadingIndicator = document.getElementById('loadingIndicator')
+        if (show) {
+          loadingIndicator.classList.remove('hidden')
+        } else {
+          loadingIndicator.classList.add('hidden')
+        }
+      }
+    </script>
+  </body>
+</html>
