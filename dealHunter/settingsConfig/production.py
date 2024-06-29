@@ -82,6 +82,8 @@ WSGI_APPLICATION = "dealHunter.wsgi.application"
 
 if os.getenv("DATABASE_URL", None) is None:
     raise Exception("DATABASE_URL environment variable not defined")
+
+print(os.environ.get("DATABASE_URL"))
 DATABASES = {
     "default": dj_database_url.parse(os.environ.get("DATABASE_URL")),
     "NAME": BASE_DIR / "db.postgres",
