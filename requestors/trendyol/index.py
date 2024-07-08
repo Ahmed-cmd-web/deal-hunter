@@ -48,3 +48,24 @@ class Trendyol_Requestor:
         return self.session.get(
             self.__construct_url(page_index), cookies=self.cookies
         ).text
+
+    def extract_link(self, link):
+        return self.session.get(link, cookies=self.cookies).text
+
+    def __extract_content_id(self, link):
+        import re
+
+        regex = r"\d+\?"
+        return re.findall(regex, link)[0].removesuffix("?")
+
+    def get_product_details(self, link):
+        return self.session.get(
+            f"https://public-mdc.trendyol.com/discovery-sfint-product-service/api/product-detail/?contentId={self.__extract_content_id(link)}",
+            cookies=self.cookies,
+        ).json()
+
+    def get_product_customizable_attrs(self, productGroupID):
+        return self.session.get(
+            f"https://public.trendyol.com/discovery-sfint-search-service/api/search/slicing-attributes/{productGroupID}",
+            cookies=self.cookies,
+        ).json()

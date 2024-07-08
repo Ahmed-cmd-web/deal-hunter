@@ -7,22 +7,6 @@ from bs4 import BeautifulSoup
 class Trendyol_Extractor:
     requestor: Trendyol_Requestor
     requestedNumber: int
-    # def requestCount(self):
-    #     requestedNumber = input(
-    #         f"There are {self.requestor.getItemsCount()} items, how many would you like to get? "
-    #     )
-
-    #     while not requestedNumber.isdigit() or int(requestedNumber) > int(
-    #         self.requestor.getItemsCount()
-    #     ):
-    #         requestedNumber = input(
-    #             f"Please input a valid number between 1 and {self.requestor.getItemsCount()} "
-    #         )
-
-    #     self.requestedNumber = int(requestedNumber)
-
-    # def __post_init__(self):
-    #     self.requestCount()
 
     def __turnToDigit(self, num: str) -> float:
         s = ""
@@ -32,21 +16,8 @@ class Trendyol_Extractor:
 
         return float(s)
 
-    def __extract_alternate_image(self, link: str):
-        import requests
-
-        product_page = requests.get(link, cookies=self.requestor.cookies).text
-        imageUrl = (
-            BeautifulSoup(product_page, "html.parser")
-            .find("div", class_="carousel-item")
-            .find("img")
-            .get("src")
-        )
-        return imageUrl
-
     def __extract(self, product: BeautifulSoup, index: int) -> dict:
         result = {}
-        # place_holder_url = "https://cdn.dsmcdn.com/mweb/production/product-placeholder.6dd40f981c7c0292fec5160d3b067fbb.jpg"
         try:
             result["imageURL"] = product.find("img").get("src")
             result["brand"] = product.find("span", class_="product-brand").getText()
@@ -90,14 +61,37 @@ class Trendyol_Extractor:
                 result["discountedPrice"] = self.__turnToDigit(
                     result["discountedPrice"]
                 )
-            # if result["imageURL"] == place_holder_url:
-            #     result["imageURL"] = self.__extract_alternate_image(result["link"])
+
+            details = self.requestor.get_product_details(result["link"])
+            attrs = self.requestor.get_product_customizable_attrs(
+                details["productGroupId"]
+            )
+            result["imageURL"] = details["smallImage"]
+            self.__extract_sizes(resultSet=result, details=details)
+            self.__extract_color_variants(resultSet=result, attrs=attrs)
+
         except Exception as e:
             print(f"Error in extracting product {index}")
             print(e)
-            print(product)
+            # print(product)
 
         return result
+
+    def __extract_sizes(self, resultSet: dict, details: dict):
+        sizes = details["allVariants"]
+        if sizes:
+            sizes = [
+                {"size": variant["value"], "inStock": variant["inStock"]}
+                for variant in sizes
+            ]
+            resultSet["sizes"] = sizes
+
+    def __extract_color_variants(self, resultSet: dict, attrs: dict):
+        if attrs:
+            for attr in attrs:
+                resultSet[attr["displayName"].lower()] = [
+                    attribute["image"] for attribute in attr["attributes"]
+                ]
 
     def extract_requested_products(self):
         resultSet = []
@@ -116,11 +110,7 @@ class Trendyol_Extractor:
                 if len(resultSet) == self.requestedNumber:
                     break
 
-        resultSet = [
-            dict(product) for product in {tuple(d.items()) for d in resultSet}
-        ][: self.requestedNumber]
+
+        resultSet = resultSet[: self.requestedNumber]
 
         return resultSet
-
-
-    
