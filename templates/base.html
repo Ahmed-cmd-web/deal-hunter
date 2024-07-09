@@ -235,7 +235,7 @@
       var data = []
       var filteredData = []
       const baseUrl = `${
-        '{{development}}' ? 'http' : 'https'
+        '{{development}}'=='True' ? 'http' : 'https'
       }://{{ request.get_host }}/`
       const getCountries = async () => {
         let res = await $.ajax({
