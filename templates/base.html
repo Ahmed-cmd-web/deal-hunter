@@ -235,7 +235,7 @@
       var data = []
       var filteredData = []
       const baseUrl = `${
-        '{{development}}'=='True' ? 'http' : 'https'
+        '{{development}}' == 'True' ? 'http' : 'https'
       }://{{ request.get_host }}/`
       const getCountries = async () => {
         let res = await $.ajax({
@@ -405,23 +405,25 @@
       }
 
       function displayResults(results) {
+        let search = document.getElementById('search').value.toLowerCase()
+        let regex = new RegExp(search, 'ig')
         const tbody = document.getElementById('resultsBody')
         tbody.innerHTML = ''
 
         results.forEach((result) => {
           const row = tbody.insertRow()
-          row.insertCell(0).textContent = result.productName
-          row.insertCell(1).textContent = result.brand
+          row.insertCell(0).innerHTML = result.productName.toString().replace(regex, `<mark>${search}</mark>`)
+          row.insertCell(1).innerHTML = result.brand.toString().replace(regex, `<mark>${search}</mark>`)
           let sizes = row.insertCell(2)
           let sizeList = document.createElement('ul')
           sizeList.className = 'grid  w-[30vw]'
           sizeList.style =
             'grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));'
-          if (!result.sizes) sizeList.textContent = 'N/A'
+          if (!result.sizes) sizeList.innerHTML = 'N/A'
           else {
             result?.sizes.forEach(({ size, inStock }) => {
               let sizeItem = document.createElement('li')
-              sizeItem.textContent = size
+              sizeItem.innerHTML = size.replace(regex, `<mark>${search}</mark>`)
               sizeItem.className = inStock ? 'text-green-600' : 'text-red-600'
               sizeList.appendChild(sizeItem)
             })
@@ -429,14 +431,14 @@
           sizes.appendChild(sizeList)
           let colors = row.insertCell(3)
           let colorList = document.createElement('ul')
-          if (!result.color) colorList.textContent = 'N/A'
+          if (!result.color) colorList.innerHTML = 'N/A'
           else {
             result?.color.forEach((color, index) => {
               let colorItem = document.createElement('li')
               colorLink = document.createElement('a')
               colorLink.href = color
               colorLink.target = '_blank'
-              colorLink.textContent = `Color ${index + 1}`
+              colorLink.innerHTML = `Color ${index + 1}`
               colorLink.className = 'text-blue-600 hover:underline'
               colorItem.appendChild(colorLink)
               colorList.appendChild(colorItem)
@@ -450,25 +452,25 @@
           img.alt = result.productName
           img.className = 'w-16 h-16'
           imgCell.appendChild(img)
-          row.insertCell(5).textContent = result.originalPrice
-            ? `${result.originalPrice} EGP`
+          row.insertCell(5).innerHTML = result.originalPrice
+            ? `${result.originalPrice.toString().replace(regex, `<mark>${search}</mark>`)} EGP`
             : 'N/A'
-          row.insertCell(6).textContent = result.discountedPrice
-            ? `${result.discountedPrice} EGP`
+          row.insertCell(6).innerHTML = result.discountedPrice
+            ? `${result.discountedPrice.toString().replace(regex, `<mark>${search}</mark>`)} EGP`
             : 'N/A'
           row.insertCell(
             7
-          ).textContent = `${result['profit/loss']} (${result['percentage']}%)`
-          if (result['percentage'] < 0) row.cells[7].style.color = '#bb2124'
+          ).innerHTML = `${result['profit/loss']} (${result['percentage'].toString().replace(regex, `<mark>${search}</mark>`)}%)`
+          if (parseFloat(result['percentage']) < 0) row.cells[7].style.color = '#bb2124'
           else {
             row.cells[7].style.color = '#22bb33'
-            row.cells[7].textContent = `${result['profit/loss']} (+${result['percentage']}%)`
+            row.cells[7].innerHTML = `${result['profit/loss'].toString().replace(regex, `<mark>${search}</mark>`)} (+${result['percentage'].toString().replace(regex, `<mark>${search}</mark>`)}%)`
           }
 
           const urlCell = row.insertCell(8)
           const link = document.createElement('a')
           link.href = result.link
-          link.textContent = 'View Deal'
+          link.innerHTML = 'View Deal'
           link.target = '_blank'
           link.className = 'text-blue-600 hover:underline'
           urlCell.appendChild(link)
