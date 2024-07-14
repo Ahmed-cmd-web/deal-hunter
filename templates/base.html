@@ -533,7 +533,7 @@
             row.cells[7].style.color = '#22bb33'
             row.cells[7].innerHTML = `${result['profit/loss'].toString().replace(regex, `<mark>${search}</mark>`)} (+${result['percentage'].toString().replace(regex, `<mark>${search}</mark>`)}%)`
           }
-          row.insertCell(8).textContent = result.country
+          row.insertCell(8).innerHTML = result.country.toString().replace(regex, `<mark>${search}</mark>`)
           const urlCell = row.insertCell(9)
           const link = document.createElement('a')
           link.href = result.link
