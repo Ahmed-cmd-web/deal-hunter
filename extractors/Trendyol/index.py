@@ -106,10 +106,11 @@ class Trendyol_Extractor:
                 break
             i += 1
             for index, product in enumerate(page_products):
-                resultSet.append(self.__extract(product, index))
+                result = self.__extract(product, index)
+                result["country"] = self.requestor.target_country
+                resultSet.append(result)
                 if len(resultSet) == self.requestedNumber:
                     break
-
 
         resultSet = resultSet[: self.requestedNumber]
 
