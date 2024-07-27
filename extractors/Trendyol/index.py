@@ -9,12 +9,9 @@ class Trendyol_Extractor:
     requestedNumber: int
 
     def __turnToDigit(self, num: str) -> float:
-        s = ""
-        for i in num:
-            if i.isdigit() or i == ".":
-                s += i
-
-        return float(s)
+        from price_parser import Price
+        return Price.fromstring(num).amount_float
+       
 
     def __extract(self, product: BeautifulSoup, index: int) -> dict:
         result = {}
@@ -61,7 +58,6 @@ class Trendyol_Extractor:
                 result["discountedPrice"] = self.__turnToDigit(
                     result["discountedPrice"]
                 )
-
             details = self.requestor.get_product_details(result["link"])
             attrs = self.requestor.get_product_customizable_attrs(
                 details["productGroupId"]
@@ -99,6 +95,8 @@ class Trendyol_Extractor:
         while len(resultSet) < self.requestedNumber:
             page_products = self.requestor.extract_page(i)
             bs = BeautifulSoup(page_products, "html.parser")
+            if (bs.find('div',class_='no-result-suggestions-wrapper') or bs.find('div',class_='no-result')):
+                break
             page_products = bs.find_all(
                 class_="product", attrs={"data-testid": "product-card"}
             )

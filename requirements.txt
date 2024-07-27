@@ -16,6 +16,7 @@ idna==3.7
 multidict==6.0.5
 packaging==24.1
 pi==0.1.2
+price-parser==0.3.4
 psycopg2-binary==2.9.9
 requests==2.32.3
 simplejson==3.19.2
