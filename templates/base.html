@@ -24,6 +24,12 @@
 
     <main class="flex-grow container mx-auto px-4 py-8">
       <div class="bg-white shadow-lg rounded-lg p-6 mb-8">
+        <button
+          onclick="window.location.href = '{{ baseUrl }}request_result/request/oldRequests/'"
+          class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300 float-right my-2"
+        >
+          View Old Requests
+        </button>
         <form id="searchForm" class="mb-6 w-full">
           <div class="mb-4">
             <label
@@ -479,8 +485,12 @@
 
         results.forEach((result) => {
           const row = tbody.insertRow()
-          row.insertCell(0).innerHTML = result.productName.toString().replace(regex, `<mark>${search}</mark>`)
-          row.insertCell(1).innerHTML = result.brand.toString().replace(regex, `<mark>${search}</mark>`)
+          row.insertCell(0).innerHTML = result.productName
+            .toString()
+            .replace(regex, `<mark>${search}</mark>`)
+          row.insertCell(1).innerHTML = result.brand
+            .toString()
+            .replace(regex, `<mark>${search}</mark>`)
           let sizes = row.insertCell(2)
           let sizeList = document.createElement('ul')
           sizeList.className = 'grid  w-[30vw]'
@@ -520,20 +530,35 @@
           img.className = 'w-16 h-16'
           imgCell.appendChild(img)
           row.insertCell(5).innerHTML = result.originalPrice
-            ? `${result.originalPrice.toString().replace(regex, `<mark>${search}</mark>`)} EGP`
+            ? `${result.originalPrice
+                .toString()
+                .replace(regex, `<mark>${search}</mark>`)} EGP`
             : 'N/A'
           row.insertCell(6).innerHTML = result.discountedPrice
-            ? `${result.discountedPrice.toString().replace(regex, `<mark>${search}</mark>`)} EGP`
+            ? `${result.discountedPrice
+                .toString()
+                .replace(regex, `<mark>${search}</mark>`)} EGP`
             : 'N/A'
-          row.insertCell(
-            7
-          ).innerHTML = `${result['profit/loss']} (${result['percentage'].toString().replace(regex, `<mark>${search}</mark>`)}%)`
-          if (parseFloat(result['percentage']) < 0) row.cells[7].style.color = '#bb2124'
+          row.insertCell(7).innerHTML = `${result['profit/loss']} (${result[
+            'percentage'
+          ]
+            .toString()
+            .replace(regex, `<mark>${search}</mark>`)}%)`
+          if (parseFloat(result['percentage']) < 0)
+            row.cells[7].style.color = '#bb2124'
           else {
             row.cells[7].style.color = '#22bb33'
-            row.cells[7].innerHTML = `${result['profit/loss'].toString().replace(regex, `<mark>${search}</mark>`)} (+${result['percentage'].toString().replace(regex, `<mark>${search}</mark>`)}%)`
+            row.cells[7].innerHTML = `${result['profit/loss']
+              .toString()
+              .replace(regex, `<mark>${search}</mark>`)} (+${result[
+              'percentage'
+            ]
+              .toString()
+              .replace(regex, `<mark>${search}</mark>`)}%)`
           }
-          row.insertCell(8).innerHTML = result.country.toString().replace(regex, `<mark>${search}</mark>`)
+          row.insertCell(8).innerHTML = result.country
+            .toString()
+            .replace(regex, `<mark>${search}</mark>`)
           const urlCell = row.insertCell(9)
           const link = document.createElement('a')
           link.href = result.link
