@@ -1,0 +1,61 @@
+<!-- templates/request_list.html -->
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ title }}</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+      <h1 class="text-2xl font-bold mb-4">{{ title }}</h1>
+      <div class="overflow-x-auto max-h-screen">
+        <table class="min-w-full bg-white shadow-md rounded-lg overflow-scroll">
+          <thead class="bg-gray-800 text-white sticky top-0">
+            <tr>
+              {% for field in querySet|get_model_fields %}
+              <th class="py-2 px-4">{{ field.verbose_name }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in querySet %}
+            <tr
+              class="border-b hover:bg-gray-100 cursor-pointer"
+              id='{{ item|attr:"id" }}'
+              class="row"
+              onclick="navigateToResults(this)"
+            >
+              {% for field in querySet|get_model_fields %}
+              <td class="py-2 px-4">
+                {% if field.name == "image_url" %}
+                <img
+                  src="{{ item|attr:field.name }}"
+                  alt="Image"
+                  class="h-16 w-16 object-cover"
+                />
+                {% else %} {{ item|attr:field.name }} {% endif %}
+              </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <script>
+      const baseUrl = `${
+        '{{development}}' == 'True' ? 'http' : 'https'
+      }://{{ request.get_host }}/`
+      const navigateToResults = (row) => {
+        if ('{{title}}' == 'Old Requests List')
+          window.location.href = `${baseUrl}request_result/result/${row.id}/oldResults/`
+      }
+    </script>
+  </body>
+</html>

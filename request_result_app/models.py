@@ -11,6 +11,7 @@ class Request(models.Model):
     source_country = models.CharField(max_length=255, choices=SourceCountries.choices)
     requested_count = models.IntegerField(default=0, null=False, blank=False)
     price = models.FloatField()
+    found_count = models.IntegerField(default=0, null=False, blank=False)
 
 
 class Result(models.Model):

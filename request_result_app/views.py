@@ -11,11 +11,25 @@ from requestors.trendyol.index import Trendyol_Requestor
 from extractors.Trendyol.index import Trendyol_Extractor
 from ast import literal_eval
 from operator import itemgetter
+from django.shortcuts import render
+import os
 
 
 class RequestViewSet(ModelViewSet):
     queryset = Request.objects.all()
     serializer_class = RequestSerializer
+
+    @action(detail=False, methods=["get"], url_path="oldRequests")
+    def render_old_requests(self, request):
+        return render(
+            request,
+            "oldRequestsResults.html",
+            context={
+                "development": os.getenv("DEVELOPMENT_MODE", "False") == "True",
+                "querySet": Request.objects.all(),
+                "title": "Old Requests List",
+            },
+        )
 
     @action(detail=False, methods=["get"])
     def get_countries(self, _):
@@ -96,7 +110,9 @@ class RequestViewSet(ModelViewSet):
             source_country=request.data["sourceCountry"],
             requested_count=count,
             price=price,
+            found_count=len(results),
         )
+
         results_objects = []
         for result in results:
             results_objects.append(
@@ -123,3 +139,24 @@ class RequestViewSet(ModelViewSet):
 class ResultViewSet(ModelViewSet):
     queryset = Result.objects.all()
     serializer_class = ResultSerializer
+
+    @action(detail=True, methods=["get"], url_path="oldResults")
+    def render_old_results(self, request, pk=None):
+        querySet = Result.objects.filter(request_id=pk).defer("request")
+
+        if not querySet.exists():
+            return Response(
+                {"message": "No results found for this request"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+        return render(
+            request,
+            "oldRequestsResults.html",
+            context={
+                "development": os.getenv("DEVELOPMENT_MODE", "False") == "True",
+                "querySet": querySet,
+                "title": "Old Results List",
+            },
+        )

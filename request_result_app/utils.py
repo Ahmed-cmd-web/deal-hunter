@@ -52,16 +52,20 @@ class Utils:
         prioritizing discounted price if available
         """
         try:
-            return sum(
-                [
-                    (
-                        result["discountedPrice"]
-                        if "discountedPrice" in result
-                        else result["originalPrice"]
-                    )
-                    for result in results
-                ]
-            ) / len(results)
+            return round(
+                sum(
+                    [
+                        (
+                            result["discountedPrice"]
+                            if "discountedPrice" in result
+                            else result["originalPrice"]
+                        )
+                        for result in results
+                    ]
+                )
+                / len(results),
+                2,
+            )
         except:
             return 0
 

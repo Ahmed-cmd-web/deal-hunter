@@ -57,7 +57,7 @@ ROOT_URLCONF = "dealHunter.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates",'templates'],
+        "DIRS": [BASE_DIR / "templates", "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -66,6 +66,9 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
+            "libraries": {
+                "filter": "request_result_app.templatetags.custom_filters",
+            },
         },
     },
 ]
@@ -79,7 +82,7 @@ WSGI_APPLICATION = "dealHunter.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": "db.sqlite3",
     }
 }
 
