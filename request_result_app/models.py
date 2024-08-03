@@ -22,8 +22,12 @@ class Result(models.Model):
     discounted_price = models.FloatField(null=True, blank=True)
     currency = models.CharField(max_length=10)
     link = models.URLField()
-    percentage = models.FloatField()
-    request = models.ForeignKey(Request, on_delete=models.CASCADE)
+    percentage = models.FloatField(blank=True, null=True)
+    request = models.ForeignKey(Request, on_delete=models.CASCADE,blank=True, null=True)
+    archived= models.BooleanField(default=False)
+    sizes= models.JSONField(default='N/A')
+    colors= models.JSONField(default='N/A')
+    country = models.CharField(max_length=255, choices=TargetCountries.choices, default='N/A')
 
     class Meta:
         constraints = [

@@ -19,7 +19,7 @@
           <thead class="bg-gray-800 text-white sticky top-0">
             <tr>
               {% for field in querySet|get_model_fields %}
-              <th class="py-2 px-4">{{ field.verbose_name }}</th>
+              <th class="py-2 px-4">{{ field }}</th>
               {% endfor %}
             </tr>
           </thead>
@@ -27,19 +27,40 @@
             {% for item in querySet %}
             <tr
               class="border-b hover:bg-gray-100 cursor-pointer"
-              id='{{ item|attr:"id" }}'
+              id='{{ item|attr:"ID" }}'
               class="row"
               onclick="navigateToResults(this)"
             >
               {% for field in querySet|get_model_fields %}
               <td class="py-2 px-4">
-                {% if field.name == "image_url" %}
+                {% if field == "IMAGE URL" %}
                 <img
-                  src="{{ item|attr:field.name }}"
+                  src="{{ item|attr:field }}"
                   alt="Image"
                   class="h-16 w-16 object-cover"
                 />
-                {% else %} {{ item|attr:field.name }} {% endif %}
+                {% elif field == "LINK" %}
+                <a
+                  href="{{ item|attr:field }}"
+                  class="text-blue-500 hover:underline"
+                  target="_blank"
+                  >View</a
+                >
+                {% elif field == "COLORS" and not item|attr:"COLORS" == 'N/A' %}
+                {% for color in item|attr:field %}
+                <a
+                  href="{{color}}"
+                  class="text-blue-500 hover:underline"
+                  target="_blank"
+                  >Color {{ forloop.counter }}</a
+                >
+                {% endfor %} {% elif field == "SIZES" and not item|attr:field == 'N/A' %}
+                <select class="border rounded px-2 py-1">
+                  {% for size in item|attr:field %}
+                  <option>{{ size }}</option>
+                  {% endfor %}
+                </select>
+                {% else %} {{ item|attr:field }} {% endif %}
               </td>
               {% endfor %}
             </tr>
