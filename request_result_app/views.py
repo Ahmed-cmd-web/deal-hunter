@@ -13,6 +13,7 @@ from ast import literal_eval
 from operator import itemgetter
 from django.shortcuts import render
 import os
+import json
 
 
 class RequestViewSet(ModelViewSet):
@@ -26,7 +27,7 @@ class RequestViewSet(ModelViewSet):
             "oldRequestsResults.html",
             context={
                 "development": os.getenv("DEVELOPMENT_MODE", "False") == "True",
-                "querySet": Request.objects.all(),
+                "querySet": RequestSerializer(Request.objects.all(), many=True).data,
                 "title": "Old Requests List",
             },
         )
@@ -101,15 +102,51 @@ class RequestViewSet(ModelViewSet):
         extractor = Trendyol_Extractor(requestor, count)
         results = extractor.extract_requested_products()
         Utils.convert_prices(source_country_data, target_country_data, results)
-        avg = Utils.calculate_avg_price(results)
         Utils.set_profit_change(results, price)
+
+        return Response(
+            {"results": sorted(results, key=itemgetter("profit/loss"), reverse=True)},
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=False, methods=["post"])
+    def save_request(self, request):
+        needed_req_fields = [
+            "searchWord",
+            "count",
+            "price",
+            "results",
+            "sourceCountry",
+            "targetCountry",
+        ]
+
+        for field in needed_req_fields:
+            if field not in request.data:
+                return Response(
+                    {"message": f"Please provide the {field} field"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        validation = Utils.check_source_target_country(
+            request.data["sourceCountry"], request.data["targetCountry"]
+        )
+        if validation is not True:
+            return validation
+
+        target_country_data = Utils.get_country_from_choices(
+            request.data["targetCountry"], TargetCountries
+        )
+        source_country_data = Utils.get_country_from_choices(
+            request.data["sourceCountry"], SourceCountries
+        )
+        results =json.loads(request.data["results"])
+        avg = Utils.calculate_avg_price(results=results)
         created_request = Request.objects.create(
             search_word=request.data["searchWord"],
-            avg_price=avg,
             target_country=target_country_data["name"],
-            source_country=request.data["sourceCountry"],
-            requested_count=count,
-            price=price,
+            source_country=source_country_data["name"],
+            requested_count=request.data["count"],
+            price=request.data["price"],
+            avg_price=avg,
             found_count=len(results),
         )
 
@@ -124,15 +161,18 @@ class RequestViewSet(ModelViewSet):
                     discounted_price=result.get("discountedPrice"),
                     currency=result["currency"],
                     link=result["link"],
-                    percentage=result["percentage"],
+                    sizes=result.get("sizes", "N/A"),
+                    colors=result.get("colors", "N/A"),
+                    country=result["country"],
                     request=created_request,
+                    archived=False,
                 )
             )
         Result.objects.bulk_create(results_objects)
 
         return Response(
-            {"results": sorted(results, key=itemgetter("profit/loss"), reverse=True)},
-            status=status.HTTP_200_OK,
+            {"message": "Request saved successfully", "id": created_request.id},
+            status=status.HTTP_201_CREATED,
         )
 
 
@@ -141,22 +181,75 @@ class ResultViewSet(ModelViewSet):
     serializer_class = ResultSerializer
 
     @action(detail=True, methods=["get"], url_path="oldResults")
-    def render_old_results(self, request, pk=None):
-        querySet = Result.objects.filter(request_id=pk).defer("request")
-
-        if not querySet.exists():
-            return Response(
-                {"message": "No results found for this request"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
+    def render_old_request_results(self, request, pk=None):
+        querySet = Result.objects.filter(request_id=pk)
 
         return render(
             request,
             "oldRequestsResults.html",
             context={
                 "development": os.getenv("DEVELOPMENT_MODE", "False") == "True",
-                "querySet": querySet,
+                "querySet": ResultSerializer(querySet, many=True).data,
                 "title": "Old Results List",
+            },
+        )
+
+    @action(detail=False, methods=["post"])
+    def save_deal(self, request):
+        # check if all fields needed to create a result are provided
+        needed_fields = [
+            "imageURL",
+            "brand",
+            "productName",
+            "currency",
+            "link",
+            "country",
+        ]
+
+        for field in needed_fields:
+            if field not in request.data:
+                return Response(
+                    {"message": f"Please provide the {field} field"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        if (
+            "originalPrice" not in request.data
+            and "discountedPrice" not in request.data
+        ):
+            return Response(
+                {"message": "Please provide either originalPrice or discountedPrice"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        result = Result.objects.create(
+            image_url=request.data["imageURL"],
+            brand=request.data["brand"],
+            product_name=request.data["productName"],
+            original_price=request.data.get("originalPrice"),
+            discounted_price=request.data.get("discountedPrice"),
+            currency=request.data["currency"],
+            link=request.data["link"],
+            sizes=request.data.get("sizes", "N/A"),
+            colors=request.data.get("colors", "N/A"),
+            country=request.data["country"],
+            archived=True,
+        )
+
+        return Response(
+            {"message": "Deal saved successfully", "id": result.id},
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=False, methods=["get"])
+    def saved_deals(self, request):
+        return render(
+            request,
+            "oldRequestsResults.html",
+            context={
+                "development": os.getenv("DEVELOPMENT_MODE", "False") == "True",
+                "querySet": ResultSerializer(
+                    Result.objects.filter(archived=True), many=True
+                ).data,
+                "title": "Saved Deals List",
             },
         )
