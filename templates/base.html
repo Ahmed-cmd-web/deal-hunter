@@ -550,9 +550,6 @@
             .replace(regex, `<mark>${search}</mark>`)
           let sizes = row.insertCell(2)
           let sizeList = document.createElement('select')
-          sizeList.className = 'grid  w-[30vw]'
-          sizeList.style =
-            'grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));'
           if (!result.sizes) sizeList.innerHTML = 'N/A'
           else {
             result?.sizes.forEach(({ size, inStock }) => {
