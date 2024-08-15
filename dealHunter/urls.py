@@ -19,6 +19,8 @@ import os
 from django.urls import path, include
 from django.contrib import admin
 from django.shortcuts import render
+from django.conf.urls.static import static
+from django.conf import settings
 
 
 urlpatterns = [
@@ -32,4 +34,4 @@ urlpatterns = [
     ),
     path("admin/", admin.site.urls),
     path("request_result/", include("request_result_app.urls")),
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
