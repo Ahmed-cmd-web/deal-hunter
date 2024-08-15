@@ -138,7 +138,7 @@ class RequestViewSet(ModelViewSet):
         source_country_data = Utils.get_country_from_choices(
             request.data["sourceCountry"], SourceCountries
         )
-        results =json.loads(request.data["results"])
+        results = json.loads(request.data["results"])
         avg = Utils.calculate_avg_price(results=results)
         created_request = Request.objects.create(
             search_word=request.data["searchWord"],
@@ -166,6 +166,7 @@ class RequestViewSet(ModelViewSet):
                     country=result["country"],
                     request=created_request,
                     archived=False,
+                    search_word=request.data["searchWord"],
                 )
             )
         Result.objects.bulk_create(results_objects)
@@ -204,6 +205,7 @@ class ResultViewSet(ModelViewSet):
             "currency",
             "link",
             "country",
+            "search_word",
         ]
 
         for field in needed_fields:
@@ -233,6 +235,7 @@ class ResultViewSet(ModelViewSet):
             colors=request.data.get("colors", "N/A"),
             country=request.data["country"],
             archived=True,
+            search_word=request.data["search_word"],
         )
 
         return Response(

@@ -25,18 +25,19 @@
     <main class="flex-grow container mx-auto px-4 py-8">
       <div class="bg-white shadow-lg rounded-lg p-6 mb-8">
         <button
-          onclick="window.location.href = '{{ baseUrl }}request_result/result/saved_deals/'"
+          onclick="window.location.href = '{{ baseUrl }}admin/request_result_app/result/'"
           class="bg-blue-500 mx-2 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300 float-right my-2"
         >
           View Saved Deals
         </button>
         <button
-          onclick="window.location.href = '{{ baseUrl }}request_result/request/oldRequests/'"
+          onclick="window.location.href = '{{ baseUrl }}admin/request_result_app/request/'"
           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full focus:outline-none focus:shadow-outline transition duration-300 float-right my-2"
         >
           View Saved Requests
         </button>
         <form id="searchForm" class="mb-6 w-full">
+          {% csrf_token %}
           <div class="mb-4">
             <label
               class="block text-gray-700 text-sm font-bold mb-2"
@@ -265,6 +266,32 @@
       }
     </style>
     <script>
+      $.ajaxSetup({
+        beforeSend: function (xhr, settings) {
+          function getCookie(name) {
+            let cookieValue = null
+            if (document.cookie && document.cookie !== '') {
+              const cookies = document.cookie.split(';')
+              for (let i = 0; i < cookies.length; i++) {
+                const cookie = jQuery.trim(cookies[i])
+                if (cookie.substring(0, name.length + 1) === name + '=') {
+                  cookieValue = decodeURIComponent(
+                    cookie.substring(name.length + 1)
+                  )
+                  break
+                }
+              }
+            }
+            return cookieValue
+          }
+          if (
+            !/^GET|HEAD|OPTIONS|TRACE$/.test(settings.type) &&
+            !this.crossDomain
+          ) {
+            xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'))
+          }
+        },
+      })
       $(document).ready(() => {
         $('#targetCountryOptions').select2({
           width: 'resolve',
@@ -283,6 +310,7 @@
       const baseUrl = `${
         '{{development}}' == 'True' ? 'http' : 'https'
       }://{{ request.get_host }}/`
+      var searchWord = ''
       const saveDeal = async (deal, saveCell) => {
         try {
           let res = await $.ajax({
@@ -292,6 +320,7 @@
               ...deal,
               sizes: JSON.stringify(deal?.sizes),
               colors: JSON.stringify(deal?.color),
+              search_word:searchWord,
             },
           })
           saveCell.innerHTML = 'Saved'
@@ -377,7 +406,7 @@
           const price = document.getElementById('price').value
           if (!price || parseInt(price) < 0)
             return alert('Please enter a valid price to extract.')
-          const searchWord = document.getElementById('keyword').value
+          searchWord = document.getElementById('keyword').value
           showLoading(true)
           const sourceCountry = $('#sourceCountryOptions').select2('data')
           const targetCountry = $('#targetCountryOptions').select2('data')
@@ -451,7 +480,7 @@
         })
 
       async function extractResults(count) {
-        request_creds=[]
+        request_creds = []
         const searchWord = document.getElementById('keyword').value
         const price = document.getElementById('price').value
         const sourceCountry = $('#sourceCountryOptions').select2('data')
@@ -635,7 +664,6 @@
       const saveRequest = async () => {
         let promises = []
         request_creds.forEach((request) => {
-          console.log(request)
           promises.push(
             $.ajax({
               url: `${baseUrl}request_result/request/save_request/`,

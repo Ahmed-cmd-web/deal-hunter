@@ -28,6 +28,7 @@ class Result(models.Model):
     sizes= models.JSONField(default='N/A')
     colors= models.JSONField(default='N/A')
     country = models.CharField(max_length=255, choices=TargetCountries.choices, default='N/A')
+    search_word = models.CharField(max_length=100, default='N/A')
 
     class Meta:
         constraints = [
