@@ -37,7 +37,7 @@ class ResultAdmin(admin.ModelAdmin):
         # "percentage",
         # "archived",
         "sizes_dropdown",
-        "colors",
+        "product_colors",
         "import_from",
         "search_word" ,
         "product_link",
@@ -60,12 +60,15 @@ class ResultAdmin(admin.ModelAdmin):
             return format_html(f"<select>{result}</select>")
         return "N/A"
 
-    def pretty_colors(self, obj):
+    def product_colors(self, obj):
         if obj.colors != "N/A":
+            colors=obj.colors
+            if isinstance(colors, str):
+                colors = json.loads(obj.colors)
             result = "\n".join(
-                [f'<span>{color["color"]}</span>' for color in obj.colors]
+                [f'<li><a href="{color}" target="_blank">Color {index}</a></li>' for index,color in enumerate(colors)]
             )
-            return format_html(result)
+            return format_html(f"<ol style='width: 100%;'>{result}</ol>")
 
     def product_link(self, obj):
         if obj.link:

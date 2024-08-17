@@ -25,10 +25,19 @@ class Trendyol_Extractor:
             if pricesArea == None:
                 pricesArea = product.find("div", class_="promotion-price-wrapper")
             if pricesArea == None:
+                pricesArea=product.find('div',class_='p-price-wrapper')
+            if pricesArea == None:
                 result["discountedPrice"] = product.find(
                     "span", class_="discounted-price"
                 ).getText()
                 result["currency"] = product.find("span", class_="currency").getText()
+            
+            elif pricesArea.find('div',class_='p-strikethrough-price') != None:
+                result["originalPrice"] = pricesArea.find('div',class_='p-strikethrough-price').getText()
+                discount_area = pricesArea.find('div',class_='p-sale-price-wrapper')
+                if discount_area != None:
+                    result["discountedPrice"] = discount_area.find('span',class_='integer-part').getText() + discount_area.find('span',class_='decimal-part').getText()
+                result["currency"] = discount_area.find('div',class_='p-currency').getText()
             elif len(pricesArea.findChildren(recursive=False)) > 1:
                 currency = None
                 original = product.find("p", class_="price-text")
@@ -40,7 +49,8 @@ class Trendyol_Extractor:
                     currency = discounted.getText().split(" ")[1]
                 result["originalPrice"] = original.getText()
                 result["discountedPrice"] = discounted.getText()
-                result["currency"] = currency
+                result["currency"] = currency 
+            
             else:
                 result["originalPrice"] = (
                     product.find("p", class_="selling-price").getText().split(" ")[0]
