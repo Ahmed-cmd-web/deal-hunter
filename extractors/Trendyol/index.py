@@ -21,11 +21,15 @@ class Trendyol_Extractor:
             result["productName"] = product.find(
                 "span", class_="product-name-text"
             ).getText()
-            pricesArea = product.find("div", class_="rrp-location-right")
-            if pricesArea == None:
-                pricesArea = product.find("div", class_="promotion-price-wrapper")
-            if pricesArea == None:
-                pricesArea=product.find('div',class_='p-price-wrapper')
+
+
+            suspectable_prices_area_elements_classes=['rrp-location-right','promotion-price-wrapper','p-price-wrapper']
+            pricesArea = None
+            for suspectable_class in suspectable_prices_area_elements_classes:
+                pricesArea = product.find("div", class_=suspectable_class)
+                if pricesArea != None:
+                    break
+            
             if pricesArea == None:
                 result["discountedPrice"] = product.find(
                     "span", class_="discounted-price"
@@ -38,6 +42,7 @@ class Trendyol_Extractor:
                 if discount_area != None:
                     result["discountedPrice"] = discount_area.find('span',class_='integer-part').getText() + discount_area.find('span',class_='decimal-part').getText()
                 result["currency"] = discount_area.find('div',class_='p-currency').getText()
+            
             elif len(pricesArea.findChildren(recursive=False)) > 1:
                 currency = None
                 original = product.find("p", class_="price-text")
@@ -52,9 +57,15 @@ class Trendyol_Extractor:
                 result["currency"] = currency 
             
             else:
-                result["originalPrice"] = (
-                    product.find("p", class_="selling-price").getText().split(" ")[0]
-                )
+                originalPriceElem=product.find("p", class_="selling-price")
+                if originalPriceElem == None:
+                    originalPriceElem = pricesArea.find("div", class_="p-sale-price")
+                    result['originalPrice'] = originalPriceElem.find('span',class_='integer-part').getText() + originalPriceElem.find('span',class_='decimal-part').getText()
+                    result['currency'] = pricesArea.find('div',class_='p-currency').getText()
+                else:
+                    result["originalPrice"] = (
+                        product.find("p", class_="selling-price").getText().split(" ")[0]
+                    )
 
             if "currency" not in result or result["currency"] == None:
                 result["currency"] = product.find(
@@ -75,12 +86,10 @@ class Trendyol_Extractor:
             result["imageURL"] = details["smallImage"]
             self.__extract_sizes(resultSet=result, details=details)
             self.__extract_color_variants(resultSet=result, attrs=attrs)
-
         except Exception as e:
             print(f"Error in extracting product {index}")
             print(e)
             # print(product)
-
         return result
 
     def __extract_sizes(self, resultSet: dict, details: dict):
