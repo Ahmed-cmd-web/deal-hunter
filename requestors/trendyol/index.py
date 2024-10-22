@@ -34,7 +34,7 @@ class Trendyol_Requestor:
     def getItemsCount(self) -> int:
         res = requests.get(self.__construct_url(1), cookies=self.cookies)
         bs = BeautifulSoup(res.text, "html.parser")
-        return bs.find("div", class_="title").find("p").getText().split(" ")[0]
+        return bs.find("p", class_="total-product-count-info").getText().split(" ")[0]
 
     def __post_init__(self):
         self.get_search_word()

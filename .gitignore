@@ -2,3 +2,5 @@ v0/
 *.sqlite3
 __pycache__/
 static/
+.direnv/
+.idea/
