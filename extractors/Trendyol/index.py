@@ -13,7 +13,7 @@ class Trendyol_Extractor:
         return Price.fromstring(num).amount_float
        
 
-    def __extract(self, product: BeautifulSoup, index: int) -> dict:
+    def __extract(self, product: BeautifulSoup,details, index: int) -> dict:
         result = {}
         try:
             result["imageURL"] = product.find("img").get("src")
@@ -79,16 +79,16 @@ class Trendyol_Extractor:
                 result["discountedPrice"] = self.__turnToDigit(
                     result["discountedPrice"]
                 )
-            details = self.requestor.get_product_details(result["link"])
-            attrs = self.requestor.get_product_customizable_attrs(
-                details["productGroupId"]
-            )
+            # details = self.requestor.get_product_details(result["link"])
+            # attrs = self.requestor.get_product_customizable_attrs(
+            #     details["productGroupId"]
+            # )
             result["imageURL"] = details["smallImage"]
             self.__extract_sizes(resultSet=result, details=details)
-            self.__extract_color_variants(resultSet=result, attrs=attrs)
+            # self.__extract_color_variants(resultSet=result, attrs=attrs)
         except Exception as e:
             print(f"Error in extracting product {index}")
-            print(e)
+            # print(e.args)
             # print(product)
         return result
 
@@ -132,3 +132,57 @@ class Trendyol_Extractor:
         resultSet = resultSet[: self.requestedNumber]
 
         return resultSet
+    
+
+    async def extract_requested_products_async(self):
+        resultSet = []
+        i = 1
+        NUMBER_OF_PRODUCTS_PER_PAGE=20
+        pages=await self.requestor.extract_pages_async([i for i in range(1,max(self.requestedNumber,10)//NUMBER_OF_PRODUCTS_PER_PAGE)])
+        print('pages_extracted')
+        if not len(pages):
+            print(pages)
+        links=[]
+        for page_products in pages:
+            bs = BeautifulSoup(page_products, "html.parser")
+            if (bs.find('div',class_='no-result-suggestions-wrapper') or bs.find('div',class_='no-result')):
+                break
+            page_products = bs.find_all(
+                class_="product", attrs={"data-testid": "product-card"}
+            )
+            if not page_products:
+                break
+            i += 1
+            
+            for index, product in enumerate(page_products):
+                links.append(f'https://trendyol.com{product.find("a").get("href")}')
+        if not len(links):
+            print(links)
+        products_details=await self.requestor.aget_products_details(links)
+        print('details extracted')
+
+        for page_products in pages:
+            bs = BeautifulSoup(page_products, "html.parser")
+            if (bs.find('div',class_='no-result-suggestions-wrapper') or bs.find('div',class_='no-result')):
+                break
+            page_products = bs.find_all(
+                class_="product", attrs={"data-testid": "product-card"}
+            )
+            if not page_products:
+                break
+            i += 1
+            
+            for index, product in enumerate(page_products):
+                result = self.__extract(product,products_details[index], index)
+                result["country"] = self.requestor.target_country
+                resultSet.append(result)
+                if len(resultSet) == self.requestedNumber:
+                    break
+        print('done')
+        print(len(resultSet))
+        resultSet = resultSet[: self.requestedNumber]
+
+        return resultSet
+    
+
+

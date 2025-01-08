@@ -14,11 +14,15 @@ from operator import itemgetter
 from django.shortcuts import render
 import os
 import json
+import asyncio
 
 
 class RequestViewSet(ModelViewSet):
     queryset = Request.objects.all()
     serializer_class = RequestSerializer
+
+
+
 
     @action(detail=False, methods=["get"], url_path="oldRequests")
     def render_old_requests(self, request):
@@ -63,6 +67,52 @@ class RequestViewSet(ModelViewSet):
             {"count": int(requestor.getItemsCount())}, status=status.HTTP_200_OK
         )
 
+    # @action(detail=False, methods=["post"])
+    # def extract_trendyol_results(self, request):
+    #     if not (count := request.data.get("count")) or (
+    #         type(count) == str and not count.isdigit()
+    #     ):
+    #         return Response(
+    #             {"message": "Please provide a valid count"},
+    #             status=status.HTTP_400_BAD_REQUEST,
+    #         )
+    #     count = int(count)
+    #     if not (price := request.data.get("price")) or (
+    #         type(price) == str and not Utils.check_is_digit(price)
+    #     ):
+    #         return Response(
+    #             {"message": "Please provide a valid price"},
+    #             status=status.HTTP_400_BAD_REQUEST,
+    #         )
+    #     price = float(price)
+    #     validation = Utils.check_needed_extraction_fields(request.data)
+    #     if validation is not True:
+    #         return validation
+    #     validation = Utils.check_source_target_country(
+    #         request.data["sourceCountry"], request.data["targetCountry"]
+    #     )
+    #     if validation is not True:
+    #         return validation
+
+    #     target_country_data = Utils.get_country_from_choices(
+    #         request.data["targetCountry"], TargetCountries
+    #     )
+    #     source_country_data = Utils.get_country_from_choices(
+    #         request.data["sourceCountry"], SourceCountries
+    #     )
+    #     requestor = Trendyol_Requestor(
+    #         target_country_data["name"], request.data["searchWord"]
+    #     )
+    #     extractor = Trendyol_Extractor(requestor, count)
+    #     results = extractor.extract_requested_products()
+    #     Utils.convert_prices(source_country_data, target_country_data, results)
+    #     Utils.set_profit_change(results, price)
+
+    #     return Response(
+    #         {"results": sorted(results, key=itemgetter("profit/loss"), reverse=True)},
+    #         status=status.HTTP_200_OK,
+    #     )
+    
     @action(detail=False, methods=["post"])
     def extract_trendyol_results(self, request):
         if not (count := request.data.get("count")) or (
@@ -100,7 +150,7 @@ class RequestViewSet(ModelViewSet):
             target_country_data["name"], request.data["searchWord"]
         )
         extractor = Trendyol_Extractor(requestor, count)
-        results = extractor.extract_requested_products()
+        results = asyncio.run(extractor.extract_requested_products_async())
         Utils.convert_prices(source_country_data, target_country_data, results)
         Utils.set_profit_change(results, price)
 
@@ -108,7 +158,7 @@ class RequestViewSet(ModelViewSet):
             {"results": sorted(results, key=itemgetter("profit/loss"), reverse=True)},
             status=status.HTTP_200_OK,
         )
-
+    
     @action(detail=False, methods=["post"])
     def save_request(self, request):
         needed_req_fields = [
