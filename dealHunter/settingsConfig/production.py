@@ -85,8 +85,15 @@ WSGI_APPLICATION = "dealHunter.wsgi.application"
 if os.getenv("DATABASE_URL", None) is None:
     raise Exception("DATABASE_URL environment variable not defined")
 
+# DATABASES = {
+#     "default": dj_database_url.config(),
+# }
+
 DATABASES = {
-    "default": dj_database_url.config(),
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": "db.sqlite3",
+    }
 }
 
 
